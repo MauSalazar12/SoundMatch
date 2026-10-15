@@ -1,0 +1,11 @@
+.env
+**/.env
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/*.pyc
+**/target/
+ai-engine/data/
+ai-engine/models/
+.stage3-*
+*.log

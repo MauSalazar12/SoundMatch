@@ -1,0 +1,10 @@
+# Direct runtime dependencies; no packages were installed by this refactor.
+# Versions reflect the existing environment; this is not a transitive lockfile.
+numpy==1.26.4
+pandas==3.0.6
+librosa==0.11.0
+torch==2.14.1
+SQLAlchemy==2.1.4
+python-dotenv==1.2.4
+psycopg==3.3.6
+laion-clap==1.1.7

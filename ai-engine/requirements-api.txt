@@ -1,0 +1,6 @@
+-r requirements.txt
+fastapi==0.143.2
+uvicorn==0.54.0
+python-multipart==0.0.32
+pydantic==2.14.0
+soundfile==0.14.0

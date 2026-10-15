@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: soundmatch-backend
+  servlet:
+    multipart:
+      max-file-size: ${MAX_UPLOAD_BYTES:20971520}B
+      max-request-size: ${MAX_REQUEST_BYTES:21037056}B
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+soundmatch:
+  ai-engine:
+    base-url: ${AI_ENGINE_URL:http://localhost:8000}
+    connect-timeout: ${AI_CONNECT_TIMEOUT:3s}
+    read-timeout: ${AI_READ_TIMEOUT:100s}
+    max-upload-bytes: ${MAX_UPLOAD_BYTES:20971520}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,aiEngine
+      show-details: never
+logging:
+  structured:
+    format:
+      console: logstash
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
