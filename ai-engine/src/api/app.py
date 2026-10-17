@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from src.api.errors import install_handlers
 from src.api.middleware import JsonFormatter, RequestMiddleware
 from src.api.routes import router
+from src.api.pcm_routes import router as pcm_router
 from src.api.schemas import ErrorResponse
 from src.api.settings import Settings
 from src.services.inference import InferenceService, create_encoder
@@ -37,9 +38,11 @@ def create_app(settings=None, repository=None, recommendation_service=None, enco
     app.state.settings = settings
     app.state.repository = repository
     app.state.recommendations = recommendation_service
-    app.add_middleware(RequestMiddleware, max_body_bytes=settings.max_upload_bytes + 65536)
+    app.add_middleware(RequestMiddleware, max_body_bytes=settings.max_upload_bytes + 65536,
+                       max_pcm_bytes=settings.max_pcm_bytes, internal_api_token=settings.internal_api_token)
     install_handlers(app)
     app.include_router(router)
+    app.include_router(pcm_router)
     logger = logging.getLogger("soundmatch")
     if not logger.handlers:
         handler = logging.StreamHandler()

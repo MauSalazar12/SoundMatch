@@ -5,6 +5,14 @@ SAMPLE_RATE = 48000
 SEGMENT_SECONDS = 10
 
 
+def prepare_pcm_samples(audio, sample_rate):
+    """Adapt validated mono samples to the same sample rate and silence filter as files."""
+    audio = np.asarray(audio, dtype=np.float32)
+    if sample_rate != SAMPLE_RATE:
+        audio = librosa.resample(audio, orig_sr=sample_rate, target_sr=SAMPLE_RATE)
+    return split_audio(audio)
+
+
 def load_audio(audio_path):
     """
     Decodifica el audio, lo convierte a mono

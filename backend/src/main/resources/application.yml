@@ -11,6 +11,23 @@ server:
     include-message: never
     include-stacktrace: never
 soundmatch:
+  streaming:
+    allowed-origins: ${WS_ALLOWED_ORIGINS:http://localhost:5173}
+    sample-rates: ${STREAM_SAMPLE_RATES:44100,48000}
+    max-sessions: ${STREAM_MAX_SESSIONS:32}
+    max-duration: ${STREAM_MAX_DURATION:30m}
+    idle-timeout: ${STREAM_IDLE_TIMEOUT:30s}
+    max-binary-bytes: ${STREAM_MAX_BINARY_BYTES:65536}
+    window-seconds: ${STREAM_WINDOW_SECONDS:10}
+    hop-seconds: ${STREAM_HOP_SECONDS:5}
+    audio-rate-limit: ${STREAM_AUDIO_RATE_LIMIT:1.2}
+    burst-seconds: ${STREAM_BURST_SECONDS:2}
+    workers: ${STREAM_WORKERS:1}
+    queue-capacity: ${STREAM_QUEUE_CAPACITY:8}
+    recommendation-limit: ${STREAM_RECOMMENDATION_LIMIT:5}
+    send-timeout-ms: ${STREAM_SEND_TIMEOUT_MS:5000}
+    send-buffer-bytes: ${STREAM_SEND_BUFFER_BYTES:262144}
+    internal-token: ${INTERNAL_API_TOKEN:}
   ai-engine:
     base-url: ${AI_ENGINE_URL:http://localhost:8000}
     connect-timeout: ${AI_CONNECT_TIMEOUT:3s}

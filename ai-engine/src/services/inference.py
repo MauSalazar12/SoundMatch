@@ -11,6 +11,7 @@ import soundfile as sf
 
 from src.api.errors import ApiError
 from src.audio.audio_processing import load_audio, split_audio
+from src.audio.pcm import decode_pcm
 from src.embeddings.vectors import normalize, to_vector_literal
 
 logger = logging.getLogger("soundmatch")
@@ -67,11 +68,21 @@ class InferenceService:
             logger.error("model_load_failed", extra={"error_type": type(exc).__name__})
 
     async def encode(self, data: bytes):
+        return await self._run(self._encode, data)
+
+    async def encode_pcm(self, data: bytes, sample_rate: int, channels: int, context=None):
+        return await self._run(self._encode_pcm, data, sample_rate, channels, context or {})
+
+    async def _run(self, operation, *args):
         if self.state != "ready":
             raise ApiError(503, "MODEL_UNAVAILABLE", "Modelo de IA no disponible")
         if not self.slot.acquire(blocking=False):
             raise ApiError(503, "INFERENCE_BUSY", "Motor de IA ocupado")
-        future = self.executor.submit(self._encode, data)
+        try:
+            future = self.executor.submit(operation, *args)
+        except RuntimeError:
+            self.slot.release()
+            raise ApiError(503, "MODEL_UNAVAILABLE", "Modelo de IA no disponible") from None
         future.add_done_callback(lambda _: self.slot.release())
         wrapped = asyncio.wrap_future(future)
         # Observe late exceptions after a timeout/cancel; retain the slot until work ends.
@@ -80,6 +91,22 @@ class InferenceService:
             return await asyncio.wait_for(asyncio.shield(wrapped), self.settings.inference_timeout_seconds)
         except TimeoutError:
             raise ApiError(504, "INFERENCE_TIMEOUT", "Tiempo de inferencia agotado") from None
+
+    def _encode_pcm(self, data, sample_rate, channels, context):
+        started = time.perf_counter()
+        audio = decode_pcm(data, sample_rate, channels, self.settings)
+        preprocessed = time.perf_counter()
+        logger.info("pcm_preprocess", extra={**context,
+            "preprocessing_ms": round((preprocessed - started) * 1000, 2)})
+        try:
+            vector = self.encoder.encode(audio)
+            to_vector_literal(vector)
+            vector = normalize(vector).astype(np.float32)
+            to_vector_literal(vector)
+            return vector
+        finally:
+            logger.info("pcm_inference", extra={**context,
+                "inference_ms": round((time.perf_counter() - preprocessed) * 1000, 2)})
 
     def _encode(self, data: bytes):
         started = time.perf_counter()

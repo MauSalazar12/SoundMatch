@@ -66,6 +66,21 @@ public class AiEngineClient {
         return call("health", () -> healthRest.get().uri("/health").retrieve().body(EngineHealth.class));
     }
 
+    public Recommendations pcm(byte[] data, int sampleRate, long sequence, String sessionId,
+                               String requestId, int limit, String internalToken) {
+        return call("pcm", () -> {
+            var request = rest.post().uri("/internal/v1/recommendations/pcm?limit={limit}", limit)
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header("X-Sample-Rate", Integer.toString(sampleRate))
+                    .header("X-Audio-Channels", "1")
+                    .header("X-Sequence", Long.toString(sequence))
+                    .header("X-Session-Id", sessionId)
+                    .header("X-Request-Id", requestId);
+            if (internalToken != null && !internalToken.isBlank()) request.header("X-Internal-Token", internalToken);
+            return request.body(data).retrieve().body(Recommendations.class);
+        });
+    }
+
     private <T> T call(String operation, Supplier<T> action) {
         long start = System.nanoTime();
         try {

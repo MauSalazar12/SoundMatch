@@ -29,4 +29,25 @@ class AiEngineHttpTest {
             server.stop(0);
         }
     }
+
+    @Test void pcmTimeoutUsesExistingClientWithoutRetry() throws Exception {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/internal/v1/recommendations/pcm", exchange -> {
+            calls.incrementAndGet();
+            exchange.getRequestBody().readAllBytes();
+            try { Thread.sleep(250); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            exchange.close();
+        });
+        server.start();
+        try {
+            var p = new AiEngineProperties(URI.create("http://127.0.0.1:" + server.getAddress().getPort()),
+                    Duration.ofSeconds(1), Duration.ofMillis(100), 1000);
+            var rest = HttpClientConfig.build(RestClient.builder(), p, p.readTimeout());
+            var error = assertThrows(ApiException.class, () -> new AiEngineClient(rest, rest)
+                    .pcm(new byte[4], 48000, 1, "session", "request", 5, ""));
+            assertEquals("INFERENCE_TIMEOUT", error.code());
+            assertEquals(1, calls.get());
+        } finally { server.stop(0); }
+    }
 }
